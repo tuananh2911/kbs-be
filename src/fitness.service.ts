@@ -67,4 +67,31 @@ export class FuzzyLogic {
         let output = output_tmp / (fuzzy_dict[1] + fuzzy_dict[2] + fuzzy_dict[3]);
         return output
     }
+    public calculateTdee(gender: string, weight: number, height: number, age: number, activityLevel: number): number {
+        if (gender !== 'male' && gender !== 'female') {
+            throw new Error("Giới tính phải là 'male' hoặc 'female'");
+        }
+        if (activityLevel < 1.2 || activityLevel > 1.9) {
+            throw new Error("Mức độ hoạt động phải nằm trong khoảng từ 1.2 đến 1.9");
+        }
+
+        // Công thức Harris-Benedict
+        let bmr: number;
+        if (gender === 'male') {
+            bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+        } else { // gender === 'female'
+            bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+        }
+
+        const tdee: number = bmr * activityLevel;
+        return tdee;
+    }
+    public calculateGoalCalories(tdee: number, timeExpect: number, goalWeight: number, currentWeight: number, caloriesConsumed: number): number {
+        const caloriesPerKg = 7700;
+        const weightDiff = goalWeight - currentWeight;
+        const calorieDiff = weightDiff * caloriesPerKg;
+        const calorieBonusPerDay = calorieDiff / timeExpect;
+        const calorieGoal = calorieBonusPerDay + tdee + caloriesConsumed;
+        return calorieGoal;
+    }
 }
