@@ -94,4 +94,45 @@ export class FuzzyLogic {
         const calorieGoal = calorieBonusPerDay + tdee + caloriesConsumed;
         return calorieGoal;
     }
+    public luaChonMonAn(monAnList, caloMucTieu: number) {
+        const numberOfMonAn = monAnList.length;
+
+        // Tạo ma trận DP để lưu trữ giá trị tối đa có thể đạt được cho từng bước
+        const dp: number[][] = [];
+
+        for (let i = 0; i <= numberOfMonAn; i++) {
+            dp[i] = [];
+            for (let j = 0; j <= caloMucTieu; j++) {
+                dp[i][j] = 0;
+            }
+        }
+
+        // Bắt đầu tính giá trị tối đa có thể đạt được
+        for (let i = 1; i <= numberOfMonAn; i++) {
+            const monAn = monAnList[i - 1];
+            for (let j = 1; j <= caloMucTieu; j++) {
+                if (monAn.Calo <= j) {
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i - 1][j - monAn.Calo] + monAn.Calo);
+                } else {
+                    dp[i][j] = dp[i - 1][j];
+                }
+            }
+        }
+
+        // Thuật toán đã hoàn thành, bây giờ chúng ta xác định danh sách các món ăn được chọn
+        const monAnDuocChon = [];
+        let i = numberOfMonAn;
+        let j = caloMucTieu;
+
+        while (i > 0 && j > 0) {
+            if (dp[i][j] !== dp[i - 1][j]) {
+                const monAn = monAnList[i - 1];
+                monAnDuocChon.push(monAn);
+                j -= monAn.Calo;
+            }
+            i--;
+        }
+
+        return monAnDuocChon.reverse();
+    }
 }
