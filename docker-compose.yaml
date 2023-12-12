@@ -20,7 +20,7 @@ services:
     env_file:
       - .env
     ports:
-      - '5000:5000' # expose-to-the-world : only-in-the-docker
+      - '5001:5000' # expose-to-the-world : only-in-the-docker
     container_name: backend-app-food
     depends_on:
       - db
