@@ -7,7 +7,7 @@ services:
       - .env
     container_name: postgres-db-app-kbs
     ports:
-      - '5433:5432'
+      - '5432:5432'
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     networks:
