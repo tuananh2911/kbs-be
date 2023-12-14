@@ -6,6 +6,7 @@ import * as Joi from '@hapi/joi';
 import { DatabaseModule } from './database/database.module';
 import { Dish } from './entity/dish.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppService } from './app.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Dish]),
@@ -25,6 +26,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [AppService],
 })
 export class AppModule {}
