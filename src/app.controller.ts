@@ -42,31 +42,112 @@ export class AppController {
       percentCarb = body.percentCarb;
     }
     const nutrition = [];
-
+    const nutritionUsed = [];
     for (let i = 2; i < 9; i++) {
-      let mealDay: MealDayInterfaces;
-      mealDay.mealBreakfast = this.randomNutrition(
+      const mealDay: MealDayInterfaces = {
+        mealBreakfast: '',
+        mealDinner: '',
+        mealLunch: '',
+      };
+      const vegetableBreakfast = await this.appService.getNutrition(
         caloBreakfast * percentVegetable,
+        'vegetable',
+        nutritionUsed,
+      );
+      mealDay.mealBreakfast += this.appService.caculateNutrition(
+        vegetableBreakfast,
+        caloBreakfast * percentVegetable,
+      );
+      mealDay.mealBreakfast += ', ';
+      const proteinBreakfast = await this.appService.getNutrition(
         caloBreakfast * percentProtein,
+        'protein',
+        nutritionUsed,
+      );
+      mealDay.mealBreakfast += this.appService.caculateNutrition(
+        proteinBreakfast,
+        caloBreakfast * percentProtein,
+      );
+      mealDay.mealBreakfast += ', ';
+      const carbBreakfast = await this.appService.getNutrition(
+        caloBreakfast * percentCarb,
+        'carb',
+        nutritionUsed,
+      );
+      mealDay.mealBreakfast += this.appService.caculateNutrition(
+        carbBreakfast,
         caloBreakfast * percentCarb,
       );
-      mealDay.mealDinner = this.randomNutrition(
+
+      nutritionUsed.push(vegetableBreakfast.id);
+      nutritionUsed.push(proteinBreakfast.id);
+      nutritionUsed.push(carbBreakfast.id);
+      const vegetableDinner = await this.appService.getNutrition(
         caloDinner * percentVegetable,
+        'vegetable',
+        nutritionUsed,
+      );
+      mealDay.mealDinner += this.appService.caculateNutrition(
+        vegetableDinner,
+        caloDinner * percentVegetable,
+      );
+      mealDay.mealDinner += ', ';
+      const proteinDinner = await this.appService.getNutrition(
         caloDinner * percentProtein,
+        'protein',
+        nutritionUsed,
+      );
+      mealDay.mealDinner += this.appService.caculateNutrition(
+        proteinDinner,
+        caloDinner * percentProtein,
+      );
+      mealDay.mealDinner += ', ';
+      const carbDinner = await this.appService.getNutrition(
+        caloDinner * percentCarb,
+        'carb',
+        nutritionUsed,
+      );
+      mealDay.mealDinner += this.appService.caculateNutrition(
+        carbDinner,
         caloDinner * percentCarb,
       );
-      mealDay.mealLunch = this.randomNutrition(
+      nutritionUsed.push(vegetableDinner.id);
+      nutritionUsed.push(proteinDinner.id);
+      nutritionUsed.push(carbDinner.id);
+      const vegetableLunch = await this.appService.getNutrition(
         caloLunch * percentVegetable,
+        'vegetable',
+        nutritionUsed,
+      );
+      mealDay.mealLunch += this.appService.caculateNutrition(
+        vegetableLunch,
+        caloLunch * percentVegetable,
+      );
+      mealDay.mealLunch += ', ';
+      const proteinLunch = await this.appService.getNutrition(
         caloLunch * percentProtein,
+        'protein',
+        nutritionUsed,
+      );
+      mealDay.mealLunch += this.appService.caculateNutrition(
+        proteinLunch,
+        caloLunch * percentProtein,
+      );
+      mealDay.mealLunch += ', ';
+      const carbLunch = await this.appService.getNutrition(
+        caloLunch * percentCarb,
+        'carb',
+        nutritionUsed,
+      );
+      mealDay.mealLunch += this.appService.caculateNutrition(
+        carbLunch,
         caloLunch * percentCarb,
       );
+      nutritionUsed.push(vegetableLunch.id);
+      nutritionUsed.push(proteinLunch.id);
+      nutritionUsed.push(carbLunch.id);
       nutrition.push(mealDay);
     }
-  }
-  randomNutrition(calo1, calo2, calo3) {
     return nutrition;
   }
-
-  @Get('exercise')
-  async recommendExercise() {}
 }

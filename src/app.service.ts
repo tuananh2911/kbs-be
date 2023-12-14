@@ -1,9 +1,15 @@
-import { Body, Injectable } from '@nestjs/common';
+import { Body, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserGymDto } from './dtos/user-gym.dto';
 import { FuzzyLogic } from './service/fitness.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Dish } from './entity/dish.entity';
 
 @Injectable()
 export class AppService {
+  constructor(
+    @InjectRepository(Dish) private dishRepository: Repository<Dish>,
+  ) {}
   async getCaloConsumed(body: UserGymDto): Promise<any> {
     const fuzzyRulesTableExercise: number[][] = [
       [1, 1, 1],
@@ -108,5 +114,45 @@ export class AppService {
       caloToReachGoal: goalCalo,
       timeToReachGoal: timeToGoal,
     };
+  }
+
+  async getNutrition(
+    calo1: number,
+    type: string,
+    nutritionUsed: string[],
+  ): Promise<Dish> {
+    const query = this.dishRepository
+      .createQueryBuilder('dish')
+      .select('dish', 'dish')
+      .addSelect('ABS(dish.calo - :calo1)', 'caloDifference')
+      .where('dish.type = :type', { type })
+      .andWhere('dish.id NOT IN (:...nutritionUsed)', { nutritionUsed })
+      .orderBy('caloDifference', 'ASC')
+      .setParameters({ calo1 })
+      .limit(1);
+
+    const closestDish = await query.getOne();
+    return closestDish;
+  }
+
+  caculateNutrition(nutrition: Dish, caloGoal: number): string {
+    // Kiểm tra xem món ăn có calo và unit không
+    if (!nutrition.calo || !nutrition.unit || nutrition.calo <= 0) {
+      throw new InternalServerErrorException(
+        'Thông tin món ăn không đầy đủ hoặc không hợp lệ.',
+      );
+    }
+
+    // Tính toán lượng calo trên mỗi gram
+    const caloPerGram = nutrition.calo / parseFloat(nutrition.unit);
+
+    // Tính toán số gram cần thiết để đạt được caloGoal
+    const requiredGrams = Math.floor(caloGoal / caloPerGram);
+
+    // Trả về chuỗi kết quả
+    let food = '';
+    food += nutrition.name;
+    food += ` (${requiredGrams}g)`;
+    return food;
   }
 }
