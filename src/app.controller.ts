@@ -1,14 +1,20 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { FuzzyLogic } from './service/fitness.service';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { UserGymDto } from './dtos/user-gym.dto';
-import { range } from 'rxjs';
 import { Repository } from 'typeorm';
 import { Dish } from './entity/dish.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AppService } from './app.service';
 import { NutritionDtos } from './dtos/nutrition.dtos';
 import { MealDayInterfaces } from './interfaces/meal-day.interfaces';
-
+import { ExerciseDto } from './dtos/exercise.dto';
+import { FuzzyLogic } from './service/fitness.service';
+import axios from 'axios';
 @Controller('app')
 export class AppController {
   constructor(
@@ -21,14 +27,12 @@ export class AppController {
     return await this.appService.getCaloConsumed(body);
   }
 
-  @Get('nutrition')
+  @Put('nutrition')
   async recomendNutrition(@Body() body: NutritionDtos) {
-    let data = new UserGymDto();
-    data = { ...body };
-    const { caloToReachGoal } = await this.appService.getCaloConsumed(data);
-    const caloBreakfast = 0.2 * caloToReachGoal;
-    const caloDinner = 0.4 * caloToReachGoal;
-    const caloLunch = 0.4 * caloToReachGoal;
+    const { caloToReachGoal } = await this.appService.getCaloConsumed(body);
+    const caloBreakfast = 0.3 * caloToReachGoal;
+    const caloDinner = 0.5 * caloToReachGoal;
+    const caloLunch = 0.2 * caloToReachGoal;
     let percentVegetable = 0.2;
     let percentProtein = 0.4;
     let percentCarb = 0.4;
@@ -149,5 +153,93 @@ export class AppController {
       nutrition.push(mealDay);
     }
     return nutrition;
+  }
+
+  @Post('exercise')
+  async getExercise(@Body() data: ExerciseDto) {
+    const fuzzyRulesTableExercise: number[][] = [
+      [1, 1, 1],
+      [2, 2, 1],
+      [3, 3, 2],
+    ];
+    const fuzzyLogicExercise = new FuzzyLogic(fuzzyRulesTableExercise);
+    const indexStrong = this.caculateCaloPrevious(
+      data.soNhayDay,
+      data.soHitDat,
+      data.soKeoXa,
+      data.soKmChayBo,
+      data.soMBoi,
+    );
+    const caloConsumed = fuzzyLogicExercise.do_de_fuzzy(
+      data.frequentlyGym,
+      indexStrong,
+      3,
+      6,
+      9,
+      50,
+      100,
+      150,
+      300,
+      500,
+      700,
+    );
+    const numberExercise = data.numberExercise;
+    const timeExercise = data.timeToGym;
+    let params;
+    if (data.muscle) {
+      params = {
+        calo_per_day: Math.floor(caloConsumed), // ví dụ giá trị
+        exercises_per_week: numberExercise, // ví dụ giá trị
+        time_for_exercise: timeExercise * 60, // ví dụ giá trị
+        muscle_group: data.muscle,
+      };
+    } else {
+      params = {
+        calo_per_day: Math.floor(caloConsumed), // ví dụ giá trị
+        exercises_per_week: numberExercise, // ví dụ giá trị
+        time_for_exercise: timeExercise * 60, // ví dụ giá trị
+      };
+    }
+    return await axios({
+      method: 'GET',
+      url: `http://127.0.0.1:8000/exercise_plan/`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      params: params,
+    })
+      .then((res) => {
+        return res.data;
+      })
+      .catch((error) => {
+        throw new BadRequestException(error.message);
+      });
+  }
+
+  caculateCaloPrevious(soNhayDay, soHitDat, soKeoXa, soKmChayBo, soMBoi) {
+    let dem = 0;
+    if (soNhayDay != 0) {
+      dem += 1;
+    }
+    if (soHitDat != 0) {
+      dem += 1;
+    }
+    if (soKeoXa != 0) {
+      dem += 1;
+    }
+    if (soKmChayBo != 0) {
+      dem += 1;
+    }
+    if (soMBoi != 0) {
+      dem += 1;
+    }
+    const calo =
+      (soNhayDay * (1 / 6) +
+        soHitDat * (10 / 6) +
+        soKeoXa * 1 +
+        soKmChayBo * 62.5 +
+        soMBoi * 0.33) /
+      dem;
+    return calo;
   }
 }

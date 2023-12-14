@@ -1,6 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { spawn } from 'child_process';
-
 export class FuzzyLogic {
   // private fuzzy_rules_table: number[][] = [[1, 1, 1], [2, 2, 1], [3, 3, 2]];
   private readonly fuzzy_rules_table: number[][];
@@ -108,9 +105,9 @@ export class FuzzyLogic {
       }
     }
     const output_tmp =
-      fuzzy_dict[1] * this.find_x(min_output, 1, avg_output, 0, fuzzy_dict[1]) +
-      fuzzy_dict[2] * 500 +
-      fuzzy_dict[3] * this.find_x(avg_output, 1, max_output, 0, fuzzy_dict[3]);
+      fuzzy_dict[1] * (avg_output / 2) +
+      fuzzy_dict[2] * avg_output +
+      fuzzy_dict[3] * max_output;
     const output = output_tmp / (fuzzy_dict[1] + fuzzy_dict[2] + fuzzy_dict[3]);
     return output;
   }

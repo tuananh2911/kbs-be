@@ -11,5 +11,5 @@ export class Dish {
   @Column()
   type: string;
   @Column()
-  unit: string;
+  quantity: number;
 }

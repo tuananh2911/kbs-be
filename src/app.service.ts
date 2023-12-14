@@ -24,9 +24,9 @@ export class AppService {
 
     const fuzzyLogicExercise = new FuzzyLogic(fuzzyRulesTableExercise);
     const fuzzyLogicNutrition = new FuzzyLogic(fuzzyRulesTableNutrition);
-    const caloConsumed = fuzzyLogicExercise.do_de_fuzzy(
+    let caloConsumed = fuzzyLogicExercise.do_de_fuzzy(
       body.frequentlyGym,
-      body.numberPushUp,
+      body.caloStrong,
       3,
       5,
       7,
@@ -37,6 +37,7 @@ export class AppService {
       500,
       700,
     );
+    caloConsumed = (caloConsumed * body.numberExercise) / 7;
     let activityLevel = 0;
     switch (body.frequentlyGym) {
       case 0:
@@ -121,30 +122,45 @@ export class AppService {
     type: string,
     nutritionUsed: string[],
   ): Promise<Dish> {
-    const query = this.dishRepository
-      .createQueryBuilder('dish')
-      .select('dish', 'dish')
-      .addSelect('ABS(dish.calo - :calo1)', 'caloDifference')
-      .where('dish.type = :type', { type })
-      .andWhere('dish.id NOT IN (:...nutritionUsed)', { nutritionUsed })
-      .orderBy('caloDifference', 'ASC')
-      .setParameters({ calo1 })
-      .limit(1);
+    const calo = Math.floor(calo1);
+    try {
+      let query;
+      if (nutritionUsed.length > 0) {
+        query = this.dishRepository
+          .createQueryBuilder('dish')
+          .select('dish')
+          .where('dish.type = :type', { type })
+          .andWhere('dish.id NOT IN (:...nutritionUsed)', { nutritionUsed })
+          .orderBy('ABS(dish.calo - :calo)', 'ASC')
+          .setParameters({ calo })
+          .limit(1);
+      } else {
+        query = this.dishRepository
+          .createQueryBuilder('dish')
+          .select('dish')
+          .where('dish.type = :type', { type })
+          .orderBy('ABS(dish.calo - :calo)', 'ASC')
+          .setParameters({ calo })
+          .limit(1);
+      }
 
-    const closestDish = await query.getOne();
-    return closestDish;
+      const closestDish = await query.getOne();
+      return closestDish;
+    } catch (e) {
+      console.log('Error:', e);
+    }
   }
 
   caculateNutrition(nutrition: Dish, caloGoal: number): string {
     // Kiểm tra xem món ăn có calo và unit không
-    if (!nutrition.calo || !nutrition.unit || nutrition.calo <= 0) {
+    if (!nutrition.calo || !nutrition.quantity || nutrition.calo <= 0) {
       throw new InternalServerErrorException(
         'Thông tin món ăn không đầy đủ hoặc không hợp lệ.',
       );
     }
 
     // Tính toán lượng calo trên mỗi gram
-    const caloPerGram = nutrition.calo / parseFloat(nutrition.unit);
+    const caloPerGram = nutrition.calo / nutrition.quantity;
 
     // Tính toán số gram cần thiết để đạt được caloGoal
     const requiredGrams = Math.floor(caloGoal / caloPerGram);
